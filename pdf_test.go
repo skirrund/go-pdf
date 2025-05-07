@@ -1,8 +1,10 @@
 package gopdf
 
 import (
+	"io"
 	"io/fs"
 	"log/slog"
+	"net/http"
 	"os"
 	"testing"
 )
@@ -24,62 +26,62 @@ func TestAddKeywords(t *testing.T) {
 			Page:     2,
 			AddText:  "姓名",
 			AbsX:     180,
-			AbsY:     580,
+			AbsY:     587,
 			FontSize: 12,
 		},
 		&PDFSearchLocation{
 			Page:     2,
 			AddText:  "男",
 			AbsX:     430,
-			AbsY:     580,
+			AbsY:     587,
 			FontSize: 12,
 		},
 		&PDFSearchLocation{
 			Page:     2,
 			AddText:  "31000000000",
 			AbsX:     180,
-			AbsY:     535,
+			AbsY:     543,
 			FontSize: 12,
 		},
 		&PDFSearchLocation{
 			Page:     2,
 			AddText:  "2023",
-			AbsX:     166,
-			AbsY:     400,
+			AbsX:     160,
+			AbsY:     407,
 			FontSize: 12,
 		},
 		&PDFSearchLocation{
 			Page:     2,
 			AddText:  "02",
-			AbsX:     220,
-			AbsY:     400,
+			AbsX:     210,
+			AbsY:     407,
 			FontSize: 12,
 		},
 		&PDFSearchLocation{
 			Page:     2,
 			AddText:  "31",
-			AbsX:     254,
-			AbsY:     400,
+			AbsX:     246,
+			AbsY:     407,
 			FontSize: 12,
 		},
 		&PDFSearchLocation{
 			Page:     2,
 			AddText:  "13321954022",
 			AbsX:     180,
-			AbsY:     490,
+			AbsY:     497,
 			FontSize: 12,
 		},
 		&PDFSearchLocation{
 			Page:     2,
 			AddText:  "方案名称",
 			AbsX:     180,
-			AbsY:     444,
+			AbsY:     451,
 			FontSize: 12,
-			Image: &Image{
-				Url:    "/Users/jerry.shi/Desktop/多少天海报_03.png",
-				Width:  100,
-				Height: 50,
-			},
+			// Image: &Image{
+			// 	Url:    "/Users/jerry.shi/Desktop/多少天海报_03.png",
+			// 	Width:  100,
+			// 	Height: 50,
+			// },
 		},
 	}
 	// bs, err := os.ReadFile("/Users/jerry.shi/Desktop/多少天海报_03.png")
@@ -89,7 +91,7 @@ func TestAddKeywords(t *testing.T) {
 	// str := base64.StdEncoding.EncodeToString(bs)
 	ls[len(ls)-1].Image = nil
 
-	b, err := os.ReadFile("/Users/jerry.shi/Desktop/240_s.pdf")
+	b, err := os.ReadFile("/Users/jerry.shi/Desktop/383_s.pdf")
 	if err != nil {
 		t.Log("<<<<<<<<<<<<<<<", err)
 	}
@@ -104,4 +106,22 @@ func TestAddKeywords(t *testing.T) {
 		t.Error(">>>>>>>>>>>", err)
 	}
 	t.Log("end")
+}
+
+func TestImg(t *testing.T) {
+	resp, err := http.Get("https://wework.qpic.cn/bizmail/CYwp2sODdzz5tItmMicoBfibxibiakMe2bGOSib9hPmKIUWRJiaiaQeBy4kqw/0")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	f, err := os.Create("/Users/jerry.shi/Desktop/testQW.png")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	f.Write(bytes)
 }

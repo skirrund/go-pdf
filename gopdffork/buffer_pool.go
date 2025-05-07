@@ -8,7 +8,7 @@ import (
 // buffer pool to reduce GC
 var buffers = sync.Pool{
 	// New is called when a new instance is needed
-	New: func() interface{} {
+	New: func() any {
 		return new(bytes.Buffer)
 	},
 }

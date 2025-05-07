@@ -913,7 +913,7 @@ func (gp *GoPdf) start(config Config, importer ...*pdfimporter.Importer) {
 }
 
 // convertNumericToFloat64 : accept numeric types, return float64-value
-func convertNumericToFloat64(size interface{}) (fontSize float64, err error) {
+func convertNumericToFloat64(size any) (fontSize float64, err error) {
 	switch size := size.(type) {
 	case float32:
 		return float64(size), nil
@@ -947,7 +947,7 @@ func convertNumericToFloat64(size interface{}) (fontSize float64, err error) {
 // SetFontWithStyle : set font style support Regular or Underline
 // for Bold|Italic should be loaded appropriate fonts with same styles defined
 // size MUST be uint*, int* or float64*
-func (gp *GoPdf) SetFontWithStyle(family string, style int, size interface{}) error {
+func (gp *GoPdf) SetFontWithStyle(family string, style int, size any) error {
 	fontSize, err := convertNumericToFloat64(size)
 	if err != nil {
 		return err
@@ -983,7 +983,7 @@ func (gp *GoPdf) SetFontWithStyle(family string, style int, size interface{}) er
 // SetFont : set font style support "" or "U"
 // for "B" and "I" should be loaded appropriate fonts with same styles defined
 // size MUST be uint*, int* or float64*
-func (gp *GoPdf) SetFont(family string, style string, size interface{}) error {
+func (gp *GoPdf) SetFont(family string, style string, size any) error {
 	return gp.SetFontWithStyle(family, getConvertedStyle(style), size)
 }
 
