@@ -1,23 +1,135 @@
 package gopdf
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/skirrund/go-pdf/gopdffork"
 )
 
 func TestT(t *testing.T) {
-	obj := PDFSearchLocation{
-		Page:     2,
-		AddText:  "测试",
-		AbsX:     100,
-		AbsY:     585,
-		FontSize: 10,
+	pdf, err := New()
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	slog.Error("obj:", slog.Attr{Key: "obj", Value: slog.AnyValue(obj)})
+	pageSize := gopdffork.PageSizeA4Landscape
+	pdf.SetMargins(50, 200, 50, 200)
+	pdf.AddPageWithOption(gopdffork.PageOption{PageSize: pageSize})
+	titleFontSize := 20.0
+	pdf.SetFont("song", "", titleFontSize)
+	title := "记账凭证"
+	x, _ := AlignCenterInPageX(pdf, pageSize, title)
+	y := 70.0
+	pdf.SetXY(x, y)
+	pdf.Text(title)
+	y = y + titleFontSize + 5
+	contentFontSize := 10.0
+	pdf.SetFont("song", "", contentFontSize)
+	period := "2025/12/02"
+	x, _ = AlignCenterInPageX(pdf, pageSize, period)
+	pdf.SetXY(x, y)
+	pdf.Text(period)
+
+	// Set the starting Y position for the table
+	tableStartY := 120.0
+	// Set the left margin for the table
+	marginLeft := 50.0
+	//核算单位
+	hsdw := "核算单位：上海宸汐科技集团有限公司"
+	h, _ := pdf.MeasureCellHeightByText(hsdw)
+	pdf.SetXY(marginLeft, tableStartY-contentFontSize-2)
+	pdf.Text(hsdw)
+
+	pzh := "凭证号：记-50"
+	ym := ""
+	pzw, _ := pdf.MeasureTextWidth(pzh)
+	ymw, _ := pdf.MeasureTextWidth(ym)
+
+	pdf.SetXY(pageSize.W-pzw-ymw-marginLeft-100, tableStartY-h-2)
+	pdf.Text(pzh)
+	pdf.SetXY(pageSize.W-ymw-marginLeft-50, tableStartY-h-2)
+	pdf.Text(ym)
+	fj := "附件张数：0"
+	pdf.SetXY(pageSize.W-pzw-ymw-marginLeft-100, tableStartY-h*2-10)
+	pdf.Text(fj)
+	jzr := "记账人："
+	y = tableStartY + 34*10 + 40
+	pdf.SetXY(marginLeft, y)
+	pdf.Text(jzr)
+
+	shr := "审核人："
+	x, _ = AlignCenterInPageX(pdf, pageSize, shr)
+	pdf.SetXY(x, y)
+	pdf.Text(shr)
+
+	zdr := "制单人：王文政"
+	zdrw, _ := pdf.MeasureTextWidth(zdr)
+	x = pageSize.W - marginLeft - zdrw
+	pdf.SetXY(x, y)
+	pdf.Text(zdr)
+
+	// Create a new table layout
+	table := pdf.NewTableLayout(marginLeft, tableStartY, 34, 9)
+	// Add columns to the table
+	//742
+	table.AddColumn("分录号", 100, "center")
+	table.AddColumn("摘要", 242, "left")
+	table.AddColumn("科目", 200, "left")
+	table.AddColumn("借方金额", 100, "right")
+	table.AddColumn("贷方金额", 100, "right")
+	table.AddRow([]string{"001", "张二超报销差旅费-小交通-员工报销-B2500834512312312312312312", "3", "5.00", "15.00"})
+	table.AddRow([]string{"", "", "", "", ""})
+	table.AddRow([]string{"", "", "", "", ""})
+	table.AddRow([]string{"", "", "", "", ""})
+	table.AddRow([]string{"", "", "", "", ""})
+	table.AddRow([]string{"", "", "", "", ""})
+	table.AddRow([]string{"", "", "", "", ""})
+	table.AddRow([]string{"", "", "", "", ""})
+	table.AddRow([]string{"合计", "大写", "", "5.00", "15.00"})
+	table.SetTableStyle(gopdffork.CellStyle{
+		BorderStyle: gopdffork.BorderStyle{
+			Top:    false,
+			Left:   false,
+			Bottom: false,
+			Right:  false,
+			Width:  0.5,
+		},
+		FillColor: gopdffork.RGBColor{R: 255, G: 255, B: 255},
+		TextColor: gopdffork.RGBColor{R: 0, G: 0, B: 0},
+	})
+	// Set the style for table header
+	table.SetHeaderStyle(gopdffork.CellStyle{
+		BorderStyle: gopdffork.BorderStyle{
+			Top:    true,
+			Left:   true,
+			Bottom: false,
+			Right:  true,
+			Width:  0.5,
+		},
+		FillColor: gopdffork.RGBColor{R: 255, G: 255, B: 255},
+		TextColor: gopdffork.RGBColor{R: 0, G: 0, B: 0},
+	})
+	table.SetCellStyle(gopdffork.CellStyle{
+		BorderStyle: gopdffork.BorderStyle{
+			Right:  true,
+			Bottom: true,
+			Top:    true,
+			Left:   true,
+			Width:  0.5,
+		},
+		FillColor: gopdffork.RGBColor{R: 255, G: 255, B: 255},
+		TextColor: gopdffork.RGBColor{R: 0, G: 0, B: 0},
+	})
+	table.DrawTable()
+	f, _ := os.Open("/Users/jerry.shi/Desktop/宸汐健康/voucher_template.pdf")
+	Merge(pdf, f)
+	pdf.WritePdf("记账凭证_test.pdf")
+
 }
 
 func TestAddKeywords(t *testing.T) {

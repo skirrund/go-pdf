@@ -1278,7 +1278,7 @@ func (gp *GoPdf) MultiCellWithOption(rectangle *Rect, text string, opt CellOptio
 	}
 
 	x := gp.GetX()
-
+	y := gp.GetY()
 	// get lineHeight
 	text, err = gp.curr.FontISubset.AddChars(text)
 	if err != nil {
@@ -1294,7 +1294,11 @@ func (gp *GoPdf) MultiCellWithOption(rectangle *Rect, text string, opt CellOptio
 	if err != nil {
 		return err
 	}
-
+	totalHeight := lineHeight * float64(len(textSplits))
+	if totalHeight < rectangle.H {
+		y = y + (rectangle.H-totalHeight)/2
+	}
+	gp.SetY(y)
 	for _, text := range textSplits {
 		gp.CellWithOption(&Rect{W: rectangle.W, H: lineHeight}, string(text), opt)
 		gp.Br(lineHeight)
@@ -2342,5 +2346,3 @@ func (gp *GoPdf) IsCurrFontContainGlyph(r rune) (bool, error) {
 
 	return true, nil
 }
-
-//tool for validate pdf https://www.pdf-online.com/osa/validate.aspx

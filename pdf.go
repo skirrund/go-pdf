@@ -40,6 +40,8 @@ func init() {
 	//fontBytes, err = os.ReadFile(d + "/font/font.ttf")
 	if err != nil {
 		slog.Error("[PDF] can not find font:" + d + "/font/font.ttf")
+	} else {
+		slog.Info("[PDF] load font:" + d + "/font/font.ttf")
 	}
 }
 
@@ -95,6 +97,31 @@ func AddKeywords(locations []*PDFSearchLocation, templateFile string, saveasFile
 		return err
 	}
 	return pg.WritePdf(saveasFilepath)
+}
+
+func New() (*gopdffork.GoPdf, error) {
+	if len(fontBytes) == 0 {
+		return nil, errors.New("[PDF] can not find font file")
+	}
+	pdf := &gopdffork.GoPdf{}
+	pdf.Start(gopdffork.Config{PageSize: *gopdffork.PageSizeA4})
+	err := pdf.AddTTFFontByReader("song", bytes.NewReader(fontBytes))
+	return pdf, err
+}
+
+func Merge(gp *gopdffork.GoPdf, other *os.File) {
+	importer := pdfimporter.NewImporter()
+	rs := io.ReadSeeker(other)
+	importer.SetSourceStream(&rs)
+	num := importer.GetNumPages()
+	pageSizes := importer.GetPageSizes()
+	for i := 1; i <= num; i++ {
+		tempW := pageSizes[i]["/MediaBox"]["w"]
+		tempH := pageSizes[i]["/MediaBox"]["h"]
+		gp.AddPageWithOption(gopdffork.PageOption{PageSize: &gopdffork.Rect{W: tempW, H: tempH}})
+		tpl := gp.ImportPageStream(&rs, i, "/MediaBox")
+		gp.UseImportedTemplate(tpl, 0, 0, tempW, tempH)
+	}
 }
 
 func AddKeywordsBytes(locations []*PDFSearchLocation, templateFile []byte, useTempPageSize bool) (bs []byte, err error) {
@@ -213,4 +240,13 @@ func doAddKeywordsBytes(locations []*PDFSearchLocation, templateFile []byte, use
 		}
 	}
 	return pdf, nil
+}
+
+// 水平页面居中
+func AlignCenterInPageX(gp *gopdffork.GoPdf, pageSize *gopdffork.Rect, text string) (float64, error) {
+	width, err := gp.MeasureTextWidth(text)
+	if err != nil {
+		return 0, nil
+	}
+	return (pageSize.W - width) / 2, nil
 }
