@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
+	"image"
 	"io"
 	"log/slog"
 	"sync"
 
+	"os"
+
 	"github.com/skirrund/go-pdf/font"
 	"github.com/skirrund/go-pdf/gopdffork"
 	"github.com/skirrund/go-pdf/pdfimporter"
-
-	"os"
 )
 
 var fontBytes []byte
@@ -122,6 +123,25 @@ func Merge(gp *gopdffork.GoPdf, other *os.File) {
 		tpl := gp.ImportPageStream(&rs, i, "/MediaBox")
 		gp.UseImportedTemplate(tpl, 0, 0, tempW, tempH)
 	}
+}
+
+func MergeImage(gp *gopdffork.GoPdf, imageFilePath string) error {
+	if img, err := os.Open(imageFilePath); err != nil {
+		return nil
+	} else {
+		if img1, _, err := image.Decode(img); err != nil {
+			return err
+		} else {
+			rect := &gopdffork.Rect{W: float64(img1.Bounds().Size().X), H: float64(img1.Bounds().Size().Y)}
+			if imgHolder, err := gopdffork.ImageHolderByPath(imageFilePath); err != nil {
+				return err
+			} else {
+				gp.AddPageWithOption(gopdffork.PageOption{PageSize: gopdffork.PageSizeA4})
+				gp.ImageByHolder(imgHolder, 0, 0, rect)
+			}
+		}
+	}
+	return nil
 }
 
 func AddKeywordsBytes(locations []*PDFSearchLocation, templateFile []byte, useTempPageSize bool) (bs []byte, err error) {
