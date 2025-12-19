@@ -132,7 +132,9 @@ func MergeImage(gp *gopdffork.GoPdf, imageFilePath string) error {
 		if img1, _, err := image.Decode(img); err != nil {
 			return err
 		} else {
-			rect := &gopdffork.Rect{W: float64(img1.Bounds().Size().X), H: float64(img1.Bounds().Size().Y)}
+			iw := min(float64(img1.Bounds().Dx()), gopdffork.PageSizeA4.W)
+			ih := min(float64(img1.Bounds().Dy()), gopdffork.PageSizeA4.H)
+			rect := &gopdffork.Rect{W: iw, H: ih}
 			if imgHolder, err := gopdffork.ImageHolderByPath(imageFilePath); err != nil {
 				return err
 			} else {
